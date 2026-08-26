@@ -1,0 +1,37 @@
+images:
+  registry: registry.gitlab.com
+  repository: sonaproject/edgetron
+  tag: stable-3.0-beta
+  pullPolicy: IfNotPresent
+  # pullSecrets: regcred
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  authentication:
+    authType: basic
+    authSecret: basic-auth
+    authRealm: 'Authentication Required - edgetron'
+  http:
+    pathType: Prefix
+
+resources:
+  limits: {}
+  requests:
+    memory: 1024Mi
+    cpu: 500m
+
+persistence:
+  enabled: false
+  persistentVolumeClaim:
+    helm:
+      existingClaim: ""
+      storageClass: longhorn-master
+      accessMode: ReadWriteMany
+      size: 1Gi
+  imageChartStorage:
+    type: filesystem
