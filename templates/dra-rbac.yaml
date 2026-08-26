@@ -1,0 +1,119 @@
+# RBAC for the edgetron DRA path. Active only when the DRA feature gates are
+# enabled on the KubeVirt CR, but the rules are harmless on clusters without
+# the DRA stack (RBAC does not validate that a group or resource exists).
+
+# DeviceClass management (resource.k8s.io): edgetron derives one DeviceClass
+# per permitted host device and per SR-IOV resource, and prunes the ones it
+# labeled as managed.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dra-resource-v1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dra-resource-v1
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: dra-resource-v1
+rules:
+  - apiGroups: ["resource.k8s.io"]
+    resources:
+      - deviceclasses
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Read-only: the VM pre-flight scheduler and the VF counters compute
+  # per-node availability as ResourceSlice inventory minus allocated
+  # ResourceClaims. edgetron never writes either kind.
+  - apiGroups: ["resource.k8s.io"]
+    resources:
+      - resourceslices
+      - resourceclaims
+    verbs: ["get", "list", "watch"]
+
+# Kyverno ClusterPolicy management: one generate policy per DeviceClass (and
+# per composite pair) that stamps the ResourceClaimTemplate into every user
+# namespace.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dra-kyverno-v1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dra-kyverno-v1
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: dra-kyverno-v1
+rules:
+  - apiGroups: ["kyverno.io"]
+    resources:
+      - clusterpolicies
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+# dra-driver-sriov policy objects (namespaced, dra-system): DeviceAttributes
+# stamps the resourceName attribute onto VFs and SriovResourcePolicy makes
+# the driver advertise them. Both are converted from the legacy sriovdp
+# ConfigMaps by edgetron. Note the group differs from the existing sriov-v1
+# role (sriovnetwork.openshift.io).
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dra-sriov-v1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dra-sriov-v1
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: dra-sriov-v1
+rules:
+  - apiGroups: ["sriovnetwork.k8snetworkplumbingwg.io"]
+    resources:
+      - deviceattributes
+      - sriovresourcepolicies
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+# Kyverno's background controller executes the generate rules
+# (generateExisting/synchronize), so it needs to manage
+# ResourceClaimTemplates itself. Its ClusterRole is an aggregationRule over
+# the labels below, so no binding is needed here -- Kyverno picks this role
+# up automatically. The instance label must match the Kyverno Helm release
+# name (default: kyverno).
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: dra-kyverno-background-controller-rct
+  labels:
+    app.kubernetes.io/component: background-controller
+    app.kubernetes.io/instance: kyverno
+    app.kubernetes.io/part-of: kyverno
+rules:
+  - apiGroups: ["resource.k8s.io"]
+    resources:
+      - resourceclaimtemplates
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
