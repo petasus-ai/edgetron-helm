@@ -1,0 +1,40 @@
+name: Helm
+
+on:
+  push:
+    branches: [ stable-3.2 ]
+
+jobs:
+  publish:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Chart Checkout
+        uses: actions/checkout@v2
+        with:
+          path: workspace
+      - name: Helm Installation
+        uses: azure/setup-helm@v1.1
+        with:
+          version: v3.7.0
+      - name: Helm Repository Checkout
+        uses: actions/checkout@v2
+        with:
+          repository: edgestack/edgestack-helm
+          token: ${{ secrets.MY_TOKEN }}
+          fetch-depth: 0
+          persist-credentials: true
+          ref: stable-3.2
+          path: edgestack-helm
+      - name: Helm Package
+        run: helm package workspace -d edgestack-helm
+      - name: Helm Push
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_TOKEN }}
+        run: |
+          git config --global user.email "opensonaproject@gmail.com"
+          git config --global user.name "edgestack-bot"
+          CHART_PACKAGE_NAME="edgetron-3.2.0.tgz"
+          cd edgestack-helm
+          git add "$CHART_PACKAGE_NAME"
+          git commit -m "$CHART_PACKAGE_NAME"
+          git push origin stable-3.2
