@@ -1,0 +1,438 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubevirt-api-v1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubevirt-api-v1
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kubevirt-api-v1
+rules:
+  - apiGroups: ["kubevirt.io"]
+    resources:
+      - virtualmachines
+      - virtualmachineinstances
+      - virtualmachineinstancereplicasets
+      - virtualmachineinstancepresets
+      - virtualmachineinstancemigrations
+      - virtualrouters
+      - floatingips
+      - securitygroups
+      - securitygrouprules
+      - flavors
+      - keypairs
+      - loadbalancers
+      - hostdevices
+      - mediateddevices
+    verbs: ["get", "list", "watch", "create", "update", "patch", "replace", "delete"]
+  - apiGroups: ["subresources.kubevirt.io"]
+    resources:
+      - virtualmachines/start
+      - virtualmachines/stop
+      - virtualmachines/restart
+      - virtualmachines/addvolume
+      - virtualmachines/migrate
+      - virtualmachines/removevolume
+      - virtualmachineinstances/pause
+      - virtualmachineinstances/unpause
+      - virtualmachineinstances/guestosinfo
+      - virtualmachineinstances/userlist
+      - virtualmachineinstances/addvolume
+      - virtualmachineinstances/removevolume
+    verbs: ["get", "list", "watch", "create", "update", "patch", "replace", "delete"]
+  - apiGroups: ["cdi.kubevirt.io"]
+    resources:
+      - datavolumes
+    verbs: ["get", "list", "watch", "create", "update", "patch", "replace", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubevirt-core-v1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubevirt-core-v1
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kubevirt-core-v1
+  namespace: kubevirt
+rules:
+  - apiGroups: ["kubevirt.io"]
+    resources:
+      - kubevirts
+    verbs: ["get", "list", "watch", "create", "update", "patch", "replace", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: core-v1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: core-v1
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: core-v1
+rules:
+  - apiGroups: [""]
+    resources:
+      - namespaces
+      - pods
+      - pods/log
+      - pods/exec
+      - nodes
+      - services
+      - events
+      - secrets
+      - configmaps
+      - persistentvolumes
+      - persistentvolumeclaims
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: apps-v1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: apps-v1
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: apps-v1
+rules:
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: storage-v1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: storage-v1
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: storage-v1
+rules:
+  - apiGroups: ["storage.k8s.io"]
+    resources:
+      - storageclasses
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: multus-v1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: multus-v1
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: multus-v1
+rules:
+  - apiGroups: ["k8s.cni.cncf.io"]
+    resources:
+      - network-attachment-definitions
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: calico-v1
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: calico-v1
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: sriov-v1
+rules:
+  - apiGroups: ["sriovnetwork.openshift.io"]
+    resources:
+      - sriovnetworks
+      - sriovnetworknodepolicies
+      - sriovnetworknodestates
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sriov-v1
+  namespace: sriov
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sriov-v1
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: calico-v1
+rules:
+  - apiGroups: ["crd.projectcalico.org"]
+    resources:
+      - ippools
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-api-common
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-api-common
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cluster-api-common
+rules:
+  - apiGroups: ["cluster.x-k8s.io"]
+    resources:
+      - clusters
+      - machines
+      - machinesets
+      - machinedeployments
+      - machinesets/scale
+      - machinedeployments/scale
+      - machinehealthchecks
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["controlplane.cluster.x-k8s.io"]
+    resources:
+      - kubeadmcontrolplanes
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["bootstrap.cluster.x-k8s.io"]
+    resources:
+      - kubeadmconfigtemplates
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["addons.cluster.x-k8s.io"]
+    resources:
+      - clusterresourcesets
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-api-kubevirt-infra
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-api-kubevirt-infra
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cluster-api-kubevirt-infra
+rules:
+  - apiGroups: ["infrastructure.cluster.x-k8s.io"]
+    resources:
+      - kubevirtclusters
+      - kubevirtmachinetemplates
+      - kubevirtmachines
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-api-vsphere-infra
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-api-vsphere-infra
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cluster-api-vsphere-infra
+rules:
+  - apiGroups: ["infrastructure.cluster.x-k8s.io"]
+    resources:
+      - vsphereclusters
+      - vspheremachinetemplates
+      - vspheremachines
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-api-tanzu
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-api-tanzu
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cluster-api-tanzu
+rules:
+  - apiGroups: ["run.tanzu.vmware.com"]
+    resources:
+      - tanzukubernetesreleases
+    verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: container-service-helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: container-service-helm
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: edgestack
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: container-service-helm
+rules:
+  - apiGroups: ["source.toolkit.fluxcd.io"]
+    resources:
+      - helmcharts
+      - helmrepositories
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["helm.toolkit.fluxcd.io"]
+    resources:
+      - helmreleases
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: container-service-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: container-service-rbac
+subjects:
+- kind: ServiceAccount
+  name: provider-api
+  namespace: edgestack
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: container-service-rbac
+rules:
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources:
+      - roles
+      - rolebindings
+    verbs: ["escalate", "bind", "get", "list", "watch", "create", "update", "patch", "delete", "deletecollection"]
+  - apiGroups: [""]
+    resources:
+      - serviceaccounts
+      - serviceaccounts/token
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete", "deletecollection"]
+  - apiGroups: ["authentication.k8s.io"]
+    resources:
+      - tokenreviews
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete", "deletecollection"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: provider-api
+  namespace: {{ .Release.Namespace }}
