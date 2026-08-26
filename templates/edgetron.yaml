@@ -1,0 +1,91 @@
+# Include a clusterrole for the edgetron Deployment,
+# and bind it to the edgetron serviceaccount.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edgetron
+  labels:
+    app: edgetron
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: edgetron
+  template:
+    metadata:
+      labels:
+        app: edgetron
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - edgetron
+              topologyKey: kubernetes.io/hostname
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+        - key: node.kubernetes.io/not-ready
+          operator: Exists
+          effect: NoSchedule
+      volumes:
+        - name: cluster-configs
+          hostPath:
+            path: /tmp/cluster-configs
+            type: DirectoryOrCreate
+        {{- if .Values.persistence.enabled }}
+        - name: helm-pv-storage
+          persistentVolumeClaim:
+            claimName: edgetron-helm
+        {{- end }}
+      serviceAccountName: provider-api
+      containers:
+        - name: edgetron
+          image: {{ .Values.images.registry }}/{{ .Values.images.repository }}:{{ .Values.images.tag }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - mountPath: /tmp/cluster-configs
+              name: cluster-configs
+              readOnly: false
+            {{- if .Values.persistence.enabled }}
+            - mountPath: /root/.cache/helm/repository
+              name: helm-pv-storage
+              readOnly: false
+            {{- end }}
+          {{- if .Values.resources }}
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          {{- end }}
+      {{- if .Values.images.pullSecrets }}
+      imagePullSecrets:
+        - name: {{ .Values.images.pullSecrets }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: edgetron-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: edgetron
+  ports:
+    - protocol: TCP
+      port: {{ .Values.service.port }}
+      targetPort: 8080
+      nodePort: {{ .Values.service.nodePort }}
