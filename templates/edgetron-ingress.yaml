@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: edgetron-ingress
+  namespace: {{ .Release.Namespace }}
+spec:
+  defaultBackend:
+    service:
+      name: edgetron-service
+      port:
+        number: {{ .Values.service.port }}
+  rules:
+  - http:
+      paths:
+      - pathType: Prefix
+        path: "/edgetron"
+        pathType: {{ .Values.ingress.http.pathType }}
+        backend:
+          service:
+            name: edgetron-service
+            port:
+              number: {{ .Values.service.port }}
