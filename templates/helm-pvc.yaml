@@ -1,0 +1,27 @@
+{{- $persistence := .Values.persistence -}}
+{{- if $persistence.enabled }}
+{{- $helm := $persistence.persistentVolumeClaim.helm -}}
+{{- if and (not $helm.existingClaim) (eq $persistence.imageChartStorage.type "filesystem") }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: edgetron
+  name: edgetron-helm
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes: 
+    - {{ $helm.accessMode }}
+  resources:
+    requests:
+      storage: {{ $helm.size }}
+  {{- if $helm.storageClass }}
+    {{- if eq "-" $helm.storageClass }}
+  storageClassName: ""
+    {{- else }}
+  storageClassName: {{ $helm.storageClass }}
+    {{- end }}
+  {{- end }}
+  volumeMode: Filesystem
+{{- end }}
+{{- end }}
