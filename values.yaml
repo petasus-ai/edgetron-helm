@@ -1,19 +1,19 @@
 images: {}
 edgetronImage:
-  registry: registry.gitlab.com
-  repository: sonaproject/edgetron
+  registry: registry.tde.sktelecom.com
+  repository: petasus/edgetron
   tag: latest
   pullPolicy: IfNotPresent
 
 edgetronWatcherImage:
-  registry: registry.gitlab.com
-  repository: sonaproject/edgetron-watcher
+  registry: registry.tde.sktelecom.com
+  repository: petasus/edgetron/watcher
   tag: latest
   pullPolicy: IfNotPresent
 
 vmEventImage:
-  registry: registry.gitlab.com
-  repository: sonaproject/vm-event-operator
+  registry: registry.tde.sktelecom.com
+  repository: petasus/vm-event-operator
   tag: latest
   pullPolicy: IfNotPresent
 
