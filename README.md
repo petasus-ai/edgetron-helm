@@ -4,13 +4,13 @@ Edgetron is an abstraction layer used for provisioning virtual infrastructure in
 ## TL;DR;
 
 ```console
-$ git clone https://github.com/sonaproject/edgetron-helm.git
+$ git clone https://github.com/petasus-ai/edgetron-helm.git
 $ helm install my-edgetron edgetron-helm
 ```
 
 ## Introduction
 
-This chart bootstraps a [edgetron](https://github.com/sonaproject/edgetron) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+This chart bootstraps a [edgetron](https://gitlab.tde.sktelecom.com/PETASUS/edgetron) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
 Edgetron charts can be used with [Kubeapps](https://kubeapps.com/) for deployment and management of Helm Charts in clusters. 
 
@@ -46,10 +46,12 @@ The command removes all the Kubernetes components associated with the chart and 
 The following tables lists the configurable parameters of the SONA chart and their default values.
 | Parameter                            | Description                                                            | Default                                  |
 |--------------------------------------|------------------------------------------------------------------------|------------------------------------------|
-| `images.registry`                    | Edgetron container image registry                                      | `opensona/registry.gitlab.com`           |
-| `images.repository`                  | Edgetron container image repository                                    | `sonaproject/edgetron`                   |
-| `images.tag`                         | Edgetron container image tag                                           | `latest`                                 |         
-| `images.pullPolicy`                  | Edgetron container image pull policy                                   | `Always`                                 |
+| `edgetronImage.registry`             | Edgetron container image registry                                      | `registry.tde.sktelecom.com`             |
+| `edgetronImage.repository`           | Edgetron container image repository                                    | `petasus/edgetron`                       |
+| `edgetronImage.tag`                  | Edgetron container image tag                                           | `latest`                                 |
+| `edgetronImage.pullPolicy`           | Edgetron container image pull policy                                   | `IfNotPresent`                           |
+| `edgetronWatcherImage.repository`    | Edgetron watcher container image repository                            | `petasus/edgetron/watcher`               |
+| `vmEventImage.repository`            | VM event operator container image repository                           | `petasus/vm-event-operator`              |
 | `replicaCount`                       | Edgetron POD replica number                                            | `1`                                      |
 | `service.type`                       | Edgetron service type                                                  | `NodePort`                               |
 | `service.port`                       | Edgetron service port number                                           | `8080`                                   |
