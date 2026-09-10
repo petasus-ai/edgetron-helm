@@ -39,6 +39,7 @@ rules:
       - networkstorages
       - clustermetadatas
       - vmmetadatas
+      - flavormetadatas
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: ["subresources.kubevirt.io"]
     resources:
