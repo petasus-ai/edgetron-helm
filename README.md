@@ -63,7 +63,7 @@ The following tables lists the configurable parameters of the SONA chart and the
 | `auth.accessTokenTTLSeconds`         | Access token lifetime                                                  | `3600`                                   |
 | `auth.refreshTokenTTLSeconds`        | Refresh token lifetime                                                 | `86400`                                  |
 | `networkPolicy.enabled`              | Let only ks-apiserver and the Gateway reach edgetron                   | `true`                                   |
-| `networkPolicy.apiserver.namespace`  | Namespace of ks-apiserver                                              | `kubesphere-system`                      |
+| `networkPolicy.apiserver.namespace`  | Namespace of ks-apiserver (ks-installer installs it in petasus-system)  | `petasus-system`                         |
 | `networkPolicy.apiserver.podLabels`  | Labels of the ks-apiserver pods                                        | `app: ks-apiserver`                      |
 | `networkPolicy.gateway.podLabels`    | Labels of the Gateway's data plane pods                                | `gateway.networking.k8s.io/gateway-name: edgetron-gateway` |
 | `networkPolicy.extraIngressFrom`     | More NetworkPolicy peers allowed to reach edgetron                     | `[]`                                     |

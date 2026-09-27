@@ -41,7 +41,7 @@ auth:
 networkPolicy:
   enabled: true
   apiserver:
-    namespace: kubesphere-system
+    namespace: petasus-system
     podLabels:
       app: ks-apiserver
   gateway:
