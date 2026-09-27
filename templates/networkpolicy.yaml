@@ -1,0 +1,35 @@
+{{- if .Values.networkPolicy.enabled }}
+# edgetron trusts the project a request names unless ks-apiserver, which
+# authorizes each request and tells edgetron its scope, sent it. So only
+# ks-apiserver reaches the API, and the Gateway, which routes nothing but the
+# API docs to edgetron (gateway.yaml).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: edgetron
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: edgetron
+spec:
+  podSelector:
+    matchLabels:
+      app: edgetron
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.apiserver.namespace }}
+          podSelector:
+            matchLabels: {{- toYaml .Values.networkPolicy.apiserver.podLabels | nindent 14 }}
+        # The Gateway's data plane runs in the Gateway's namespace.
+        - podSelector:
+            matchLabels: {{- toYaml .Values.networkPolicy.gateway.podLabels | nindent 14 }}
+        {{- with .Values.networkPolicy.extraIngressFrom }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: 8080
+{{- end }}

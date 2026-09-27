@@ -1,3 +1,32 @@
+{{- /*
+The account ks-apiserver takes edgetron tokens with, and the key edgetron
+signs them with. ks-apiserver reads this Secret itself, so nothing else has
+to carry the values. Given values win; otherwise the current Secret's are
+kept, and the first install generates them. Computed once here, so the pod
+annotation below changes, and edgetron restarts, exactly when they do.
+*/ -}}
+{{- $authSecret := .Values.auth.existingSecret | default "edgetron-auth" }}
+{{- $current := (lookup "v1" "Secret" .Release.Namespace $authSecret).data | default dict }}
+{{- $authData := $current }}
+{{- if not .Values.auth.existingSecret }}
+{{- $authData = dict
+      "username" (.Values.auth.username | b64enc)
+      "password" (ternary (.Values.auth.password | toString | b64enc) (index $current "password" | default (randAlphaNum 40 | b64enc)) (not (empty .Values.auth.password)))
+      "jwt-secret" (ternary (.Values.auth.jwtSecret | toString | b64enc) (index $current "jwt-secret" | default (randAlphaNum 64 | b64enc)) (not (empty .Values.auth.jwtSecret))) }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $authSecret }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: edgetron
+type: Opaque
+data:
+  jwt-secret: {{ index $authData "jwt-secret" }}
+  username: {{ index $authData "username" }}
+  password: {{ index $authData "password" }}
+---
+{{- end }}
 # Include a clusterrole for the edgetron Deployment,
 # and bind it to the edgetron serviceaccount.
 apiVersion: apps/v1
@@ -16,6 +45,8 @@ spec:
     metadata:
       labels:
         app: edgetron
+      annotations:
+        checksum/auth: {{ toJson $authData | sha256sum }}
     spec:
       nodeSelector:
         node-role.kubernetes.io/control-plane: ""
@@ -58,6 +89,26 @@ spec:
           imagePullPolicy: {{ .Values.edgetronImage.pullPolicy }}
           ports:
             - containerPort: 8080
+          env:
+            - name: EDGETRON_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $authSecret }}
+                  key: jwt-secret
+            - name: EDGETRON_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $authSecret }}
+                  key: username
+            - name: EDGETRON_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $authSecret }}
+                  key: password
+            - name: EDGETRON_ACCESS_TOKEN_TTL_SECONDS
+              value: {{ .Values.auth.accessTokenTTLSeconds | quote }}
+            - name: EDGETRON_REFRESH_TOKEN_TTL_SECONDS
+              value: {{ .Values.auth.refreshTokenTTLSeconds | quote }}
           volumeMounts:
             - mountPath: /tmp/cluster-configs
               name: cluster-configs

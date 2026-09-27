@@ -56,6 +56,17 @@ The following tables lists the configurable parameters of the SONA chart and the
 | `service.type`                       | Edgetron service type                                                  | `NodePort`                               |
 | `service.port`                       | Edgetron service port number                                           | `8080`                                   |
 | `service.nodePort`                   | Edgetron service node port number                                      | `30080`                                  |
+| `auth.existingSecret`                | Secret with the keys `jwt-secret`, `username`, `password`; the chart then creates none | `""`                     |
+| `auth.username`                      | Account ks-apiserver takes edgetron tokens with                        | `edgetron`                               |
+| `auth.password`                      | Its password; empty keeps the Secret's current one or generates one    | `""`                                     |
+| `auth.jwtSecret`                     | Key edgetron signs tokens with; empty keeps the current one or generates one | `""`                               |
+| `auth.accessTokenTTLSeconds`         | Access token lifetime                                                  | `3600`                                   |
+| `auth.refreshTokenTTLSeconds`        | Refresh token lifetime                                                 | `86400`                                  |
+| `networkPolicy.enabled`              | Let only ks-apiserver and the Gateway reach edgetron                   | `true`                                   |
+| `networkPolicy.apiserver.namespace`  | Namespace of ks-apiserver                                              | `kubesphere-system`                      |
+| `networkPolicy.apiserver.podLabels`  | Labels of the ks-apiserver pods                                        | `app: ks-apiserver`                      |
+| `networkPolicy.gateway.podLabels`    | Labels of the Gateway's data plane pods                                | `gateway.networking.k8s.io/gateway-name: edgetron-gateway` |
+| `networkPolicy.extraIngressFrom`     | More NetworkPolicy peers allowed to reach edgetron                     | `[]`                                     |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
@@ -73,4 +84,43 @@ $ helm install my-edgetron -f values.yaml edgetron-helm
 ```
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
+
+## Authentication and access
+
+ks-apiserver is the only caller of the edgetron API. It takes a token with the
+account in the Secret `edgetron-auth` (keys `jwt-secret`, `username`,
+`password`), which it reads itself, and edgetron signs tokens with
+`jwt-secret`. The first install generates the password and the signing key;
+upgrades keep them.
+
+A NetworkPolicy lets only ks-apiserver and the Gateway reach edgetron, and the
+Gateway routes nothing but the API docs (`/edgetron/docs`, `/edgetron/redoc`,
+`/edgetron/v1/openapi.json`, `/edgetron/static`) to it.
+
+Upgrading a cluster that runs an older edgetron or ks-apiserver: an older
+edgetron image ignores the Secret and keeps the built-in account, and an older
+ks-apiserver keeps its own, so a generated account would lock them out of
+each other. Do the first upgrade with the current account, and rotate once
+both images are the new ones:
+
+```console
+$ helm upgrade edgetron edgetron-helm -n edgestack-system --reuse-values \
+    --set auth.password=<current password> --set auth.jwtSecret=<current signing key>
+```
+
+To rotate the account and the signing key, delete the Secret, or set new
+`auth.password` and `auth.jwtSecret`, and upgrade. Clear values set earlier,
+which `--reuse-values` would otherwise keep:
+
+```console
+$ kubectl -n edgestack-system delete secret edgetron-auth
+$ helm upgrade edgetron edgetron-helm -n edgestack-system --reuse-values \
+    --set auth.password= --set auth.jwtSecret=
+```
+
+The Secret's checksum on the pod template restarts edgetron with the new
+values. ks-apiserver needs no restart: its old token is refused, and it takes
+a new one with the account it reads from the Secret. While the pods roll, old
+and new pods sign with different keys, so a few requests may be refused and
+retried.
 

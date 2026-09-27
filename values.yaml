@@ -23,13 +23,34 @@ service:
   type: ClusterIP
   port: 8080
 
-ingress:
-  authentication:
-    authType: basic
-    authSecret: basic-auth
-    authRealm: 'Authentication Required - edgetron'
-  http:
-    pathType: Prefix
+# The account ks-apiserver takes edgetron tokens with and the key edgetron
+# signs them with, kept in the Secret edgetron-auth (keys jwt-secret, username,
+# password). ks-apiserver reads that Secret itself.
+auth:
+  # A Secret of your own with those keys; the chart then creates none.
+  existingSecret: ""
+  username: edgetron
+  # Left empty, the password and the signing key keep the Secret's current
+  # values, or are generated on the first install.
+  password: ""
+  jwtSecret: ""
+  accessTokenTTLSeconds: 3600
+  refreshTokenTTLSeconds: 86400
+
+# Only ks-apiserver and the Gateway (API docs only) reach edgetron.
+networkPolicy:
+  enabled: true
+  apiserver:
+    namespace: kubesphere-system
+    podLabels:
+      app: ks-apiserver
+  gateway:
+    # nginx-gateway-fabric 2.x labels the data plane pods it provisions in the
+    # Gateway's namespace with the Gateway's name.
+    podLabels:
+      gateway.networking.k8s.io/gateway-name: edgetron-gateway
+  # More NetworkPolicyPeers allowed to reach edgetron.
+  extraIngressFrom: []
 
 resources:
   limits: {}
