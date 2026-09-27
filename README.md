@@ -104,17 +104,23 @@ each other. Do the first upgrade with the current account, and rotate once
 both images are the new ones:
 
 ```console
-$ helm upgrade edgetron edgetron-helm -n edgestack-system --reuse-values \
+$ helm upgrade edgetron edgetron-helm -n edgestack-system --reset-then-reuse-values \
     --set auth.password=<current password> --set auth.jwtSecret=<current signing key>
 ```
 
+Upgrade with `--reset-then-reuse-values` (Helm 3.14 or later), never
+`--reuse-values`: `--reuse-values` also keeps the previous chart's defaults,
+so a default this chart changes, such as the namespace the NetworkPolicy lets
+ks-apiserver in from, would not apply and ks-apiserver could be cut off from
+edgetron.
+
 To rotate the account and the signing key, delete the Secret, or set new
 `auth.password` and `auth.jwtSecret`, and upgrade. Clear values set earlier,
-which `--reuse-values` would otherwise keep:
+which `--reset-then-reuse-values` would otherwise keep:
 
 ```console
 $ kubectl -n edgestack-system delete secret edgetron-auth
-$ helm upgrade edgetron edgetron-helm -n edgestack-system --reuse-values \
+$ helm upgrade edgetron edgetron-helm -n edgestack-system --reset-then-reuse-values \
     --set auth.password= --set auth.jwtSecret=
 ```
 
