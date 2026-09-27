@@ -31,11 +31,14 @@ rules:
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   # Read-only: the VM pre-flight scheduler and the VF counters compute
   # per-node availability as ResourceSlice inventory minus allocated
-  # ResourceClaims. edgetron never writes either kind.
+  # ResourceClaims, and the host device status checks which projects the
+  # Kyverno policies stamped a ResourceClaimTemplate into. edgetron never
+  # writes any of the three (Kyverno writes the templates).
   - apiGroups: ["resource.k8s.io"]
     resources:
       - resourceslices
       - resourceclaims
+      - resourceclaimtemplates
     verbs: ["get", "list", "watch"]
 
 # Kyverno ClusterPolicy management: one generate policy per DeviceClass (and
