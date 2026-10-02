@@ -61,6 +61,11 @@ rules:
       - datavolumes
       - datavolumes/source
     verbs: ["*"]
+  # how CDI clones on a storage class (the volume detail's clone strategy)
+  - apiGroups: ["cdi.kubevirt.io"]
+    resources:
+      - storageprofiles
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["snapshot.kubevirt.io"]
     resources:
       - virtualmachinesnapshots
@@ -71,10 +76,15 @@ rules:
     resources:
       - virtualmachineclones
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # a volume's own snapshots are made and removed through the volume API
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources:
       - volumesnapshots
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources:
       - volumesnapshotclasses
+      - volumesnapshotcontents
     verbs: ["get", "list", "watch"]
 
 ---
@@ -189,6 +199,10 @@ rules:
     resources:
       - storageclasses
       - csistoragecapacities
+      # which node a volume is attached to, and the CSI drivers in place
+      - volumeattachments
+      - csidrivers
+      - csinodes
     verbs: ["get", "list", "watch"]
 
 ---
