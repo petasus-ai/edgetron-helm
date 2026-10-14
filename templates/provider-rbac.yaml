@@ -356,6 +356,12 @@ rules:
       - machinedeployments/scale
       - machinehealthchecks
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Read only: edgetron checks a project holds the ClusterClass a new
+  # cluster is made on; petasus-resource-manager installs them.
+  - apiGroups: ["cluster.x-k8s.io"]
+    resources:
+      - clusterclasses
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["controlplane.cluster.x-k8s.io"]
     resources:
       - kubeadmcontrolplanes
