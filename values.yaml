@@ -36,8 +36,25 @@ auth:
   jwtSecret: ""
   accessTokenTTLSeconds: 3600
   refreshTokenTTLSeconds: 86400
+  # Read-only accounts for other apps in the cluster, kept in the Secret
+  # edgetron-readers: they read everything but a cluster's kubeconfig, its
+  # etcd snapshots and the license key, and run the placement dry-runs. An
+  # empty password keeps the Secret's current one or generates one; hand it to
+  # the app from
+  #   kubectl -n <namespace> get secret edgetron-readers -o jsonpath='{.data.<name>}' | base64 -d
+  # Each app's pods also go in networkPolicy.extraIngressFrom.
+  readers: []
+  # - name: inventory-app
+  #   password: ""
 
-# Only ks-apiserver and the Gateway (API docs only) reach edgetron.
+gateway:
+  # Route the API to edgetron for read-only accounts from outside the cluster
+  # (logging in, GET, and POST for the placement dry-runs), so Try it out on
+  # /edgetron/docs works. edgetron takes no other account through the Gateway.
+  readOnlyApi: true
+
+# Only ks-apiserver, the Gateway (the API docs, and the read-only API with
+# gateway.readOnlyApi) and the extraIngressFrom peers reach edgetron.
 networkPolicy:
   enabled: true
   apiserver:
@@ -49,7 +66,14 @@ networkPolicy:
     # Gateway's namespace with the Gateway's name.
     podLabels:
       gateway.networking.k8s.io/gateway-name: edgetron-gateway
-  # More NetworkPolicyPeers allowed to reach edgetron.
+  # More NetworkPolicyPeers allowed to reach edgetron, such as the apps given
+  # read-only accounts (auth.readers):
+  #   - namespaceSelector:
+  #       matchLabels:
+  #         kubernetes.io/metadata.name: inventory
+  #     podSelector:
+  #       matchLabels:
+  #         app: inventory-app
   extraIngressFrom: []
 
 resources:

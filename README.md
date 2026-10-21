@@ -62,11 +62,13 @@ The following tables lists the configurable parameters of the SONA chart and the
 | `auth.jwtSecret`                     | Key edgetron signs tokens with; empty keeps the current one or generates one | `""`                               |
 | `auth.accessTokenTTLSeconds`         | Access token lifetime                                                  | `3600`                                   |
 | `auth.refreshTokenTTLSeconds`        | Refresh token lifetime                                                 | `86400`                                  |
-| `networkPolicy.enabled`              | Let only ks-apiserver and the Gateway reach edgetron                   | `true`                                   |
+| `auth.readers`                       | Read-only accounts for other apps in the cluster, `{name, password}` each, kept in the Secret `edgetron-readers`; an empty password keeps the current one or generates one | `[]` |
+| `gateway.readOnlyApi`                | Route the API through the Gateway for read-only accounts (login, GET, placement dry-runs) | `true`                |
+| `networkPolicy.enabled`              | Let only ks-apiserver, the Gateway and `extraIngressFrom` reach edgetron | `true`                                 |
 | `networkPolicy.apiserver.namespace`  | Namespace of ks-apiserver (ks-installer installs it in petasus-system)  | `petasus-system`                         |
 | `networkPolicy.apiserver.podLabels`  | Labels of the ks-apiserver pods                                        | `app: ks-apiserver`                      |
 | `networkPolicy.gateway.podLabels`    | Labels of the Gateway's data plane pods                                | `gateway.networking.k8s.io/gateway-name: edgetron-gateway` |
-| `networkPolicy.extraIngressFrom`     | More NetworkPolicy peers allowed to reach edgetron                     | `[]`                                     |
+| `networkPolicy.extraIngressFrom`     | More NetworkPolicy peers allowed to reach edgetron, such as the pods of the apps in `auth.readers` | `[]`         |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
@@ -93,9 +95,18 @@ account in the Secret `edgetron-auth` (keys `jwt-secret`, `username`,
 `jwt-secret`. The first install generates the password and the signing key;
 upgrades keep them.
 
-A NetworkPolicy lets only ks-apiserver and the Gateway reach edgetron, and the
-Gateway routes nothing but the API docs (`/edgetron/docs`, `/edgetron/redoc`,
-`/edgetron/v1/openapi.json`, `/edgetron/static`) to it.
+A NetworkPolicy lets only ks-apiserver, the Gateway and the peers in
+`networkPolicy.extraIngressFrom` reach edgetron. The Gateway routes the API docs
+(`/edgetron/docs`, `/edgetron/redoc`, `/edgetron/v1/openapi.json`,
+`/edgetron/static`) to it and, with `gateway.readOnlyApi` (on by default), the
+API for read-only accounts: logging in, `GET` and the placement dry-runs, so Try
+it out on `/edgetron/docs` works. It marks those requests, and edgetron takes no
+other account through it.
+
+Read-only accounts (`auth.readers`) are for other apps: they read everything but
+a cluster's kubeconfig, its etcd snapshots and the license key. Apps in the
+cluster call `edgetron-service` directly, with their pods in
+`networkPolicy.extraIngressFrom`.
 
 Upgrading a cluster that runs an older edgetron or ks-apiserver: an older
 edgetron image ignores the Secret and keeps the built-in account, and an older

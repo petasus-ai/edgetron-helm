@@ -1,8 +1,10 @@
 {{- if .Values.networkPolicy.enabled }}
 # edgetron trusts the project a request names unless ks-apiserver, which
 # authorizes each request and tells edgetron its scope, sent it. So only
-# ks-apiserver reaches the API, and the Gateway, which routes nothing but the
-# API docs to edgetron (gateway.yaml).
+# ks-apiserver reaches the API, the Gateway, which routes the API docs and,
+# marked so edgetron takes read-only accounts only, the read-only API
+# (gateway.yaml), and the apps in extraIngressFrom, which call it with
+# read-only accounts (auth.readers).
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

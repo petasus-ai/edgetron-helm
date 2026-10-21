@@ -27,6 +27,33 @@ data:
   password: {{ index $authData "password" }}
 ---
 {{- end }}
+{{- /*
+Read-only accounts for the other apps in the cluster: one key per account,
+its password the value. edgetron reads the mounted Secret at each login, so
+an account comes or goes without a restart. Given passwords win; otherwise
+the current Secret's are kept, and a new account gets one generated. With no
+auth.readers the chart leaves edgetron-readers alone: one made by hand works too.
+*/ -}}
+{{- $readersSecret := "edgetron-readers" }}
+{{- with .Values.auth.readers }}
+{{- $currentReaders := (lookup "v1" "Secret" $.Release.Namespace $readersSecret).data | default dict }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $readersSecret }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: edgetron
+type: Opaque
+data:
+  {{- range . }}
+  {{- if or (eq .name $.Values.auth.username) (hasPrefix "." .name) }}
+  {{- fail (printf "auth.readers: %q cannot be a read-only account's name" .name) }}
+  {{- end }}
+  {{ .name }}: {{ ternary (.password | toString | b64enc) (index $currentReaders .name | default (randAlphaNum 40 | b64enc)) (not (empty .password)) }}
+  {{- end }}
+---
+{{- end }}
 # Include a clusterrole for the edgetron Deployment,
 # and bind it to the edgetron serviceaccount.
 apiVersion: apps/v1
@@ -77,6 +104,10 @@ spec:
           hostPath:
             path: /tmp/cluster-configs
             type: DirectoryOrCreate
+        - name: readers
+          secret:
+            secretName: {{ $readersSecret }}
+            optional: true
         {{- if .Values.persistence.enabled }}
         - name: helm-pv-storage
           persistentVolumeClaim:
@@ -113,6 +144,9 @@ spec:
             - mountPath: /tmp/cluster-configs
               name: cluster-configs
               readOnly: false
+            - mountPath: /etc/edgetron/readers
+              name: readers
+              readOnly: true
             {{- if .Values.persistence.enabled }}
             - mountPath: /root/.cache/helm/repository
               name: helm-pv-storage
