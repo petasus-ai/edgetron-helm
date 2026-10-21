@@ -149,6 +149,12 @@ rules:
       - persistentvolumeclaims
       - resourcequotas
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Read only, through the API server's service proxy: edgetron asks the
+  # infra Prometheus for each NUMA node's memory and hugepages.
+  - apiGroups: [""]
+    resources:
+      - services/proxy
+    verbs: ["get"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
