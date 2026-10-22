@@ -1,0 +1,35 @@
+name: Chart
+
+# Publishes this chart to petasus-ai/edgestack-helm on every push to main, with the
+# shared action of petasus-ai/.github: 0.0.0-dev to the dev channel, and, while sites on
+# edgespray main or master still install it, 3.5.0 replaced on master as before.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: chart
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: chart
+      - name: Publish 0.0.0-dev to the dev channel
+        uses: petasus-ai/.github/actions/publish-chart@f66755de01cb62bb6f294e1f0303e54b45c323df
+        with:
+          chart: chart
+          channel: dev
+          token: ${{ secrets.MY_TOKEN }}
+      - name: Replace 3.5.0 on master
+        uses: petasus-ai/.github/actions/publish-chart@f66755de01cb62bb6f294e1f0303e54b45c323df
+        with:
+          chart: chart
+          channel: stable
+          version: "3.5.0"
+          replace: "true"
+          token: ${{ secrets.MY_TOKEN }}
