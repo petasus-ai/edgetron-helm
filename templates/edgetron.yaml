@@ -140,6 +140,10 @@ spec:
               value: {{ .Values.auth.accessTokenTTLSeconds | quote }}
             - name: EDGETRON_REFRESH_TOKEN_TTL_SECONDS
               value: {{ .Values.auth.refreshTokenTTLSeconds | quote }}
+            {{- if .Values.pullAgent.enabled }}
+            - name: PULL_AGENT_PORT
+              value: {{ .Values.pullAgent.port | quote }}
+            {{- end }}
           volumeMounts:
             - mountPath: /tmp/cluster-configs
               name: cluster-configs

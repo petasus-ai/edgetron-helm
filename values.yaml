@@ -76,6 +76,21 @@ networkPolicy:
   #         app: inventory-app
   extraIngressFrom: []
 
+# The pull agent on every node (pull-agent.yaml): how much of an image the
+# node has downloaded, for the image list and detail. contentPath is
+# containerd's content store on the nodes.
+pullAgent:
+  enabled: true
+  port: 8095
+  contentPath: /var/lib/containerd/io.containerd.content.v1.content
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 96Mi
+
 resources:
   limits: {}
   requests:
