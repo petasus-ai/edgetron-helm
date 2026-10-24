@@ -3,8 +3,22 @@
 # pulling an image, read off containerd's content store, mounted read-only
 # (only the image's manifest and the layers' sizes are read). edgetron asks
 # the agent on an importer pod's node while the node downloads a catalog or
-# bundle image, for the percent, speed and time left the console shows
-# (edgetron kubevirt/core/pull_agent.py). It runs the edgetron image.
+# bundle image, for the percent, speed and time left the console shows.
+# The agent is files/pull-agent.py, a copy of edgetron's
+# kubevirt/core/pull_agent.py (standard library only), run on a stock Python
+# image: like the other node DaemonSets it must pull a public image on every
+# node, and edgetron's own comes from a private registry.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: edgetron-pull-agent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: edgetron-pull-agent
+data:
+  pull_agent.py: |-
+{{ .Files.Get "files/pull-agent.py" | indent 4 }}
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -20,6 +34,8 @@ spec:
     metadata:
       labels:
         app: edgetron-pull-agent
+      annotations:
+        checksum/agent: {{ .Files.Get "files/pull-agent.py" | sha256sum }}
     spec:
       # Any node may pull an image.
       tolerations:
@@ -27,11 +43,12 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: pull-agent
-          image: {{ .Values.edgetronImage.registry }}/{{ .Values.edgetronImage.repository }}:{{ .Values.edgetronImage.tag }}
-          imagePullPolicy: {{ .Values.edgetronImage.pullPolicy }}
-          workingDir: /app
-          command: ["python3", "-m", "kubevirt.core.pull_agent"]
+          image: {{ .Values.pullAgent.image.registry }}/{{ .Values.pullAgent.image.repository }}:{{ .Values.pullAgent.image.tag }}
+          imagePullPolicy: {{ .Values.pullAgent.image.pullPolicy }}
+          command: ["python3", "/agent/pull_agent.py"]
           env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
             - name: PULL_AGENT_CONTENT
               value: /containerd-content
             - name: PULL_AGENT_PORT
@@ -56,18 +73,20 @@ spec:
           resources: {{ toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
+            - name: agent
+              mountPath: /agent
+              readOnly: true
             - name: containerd-content
               mountPath: /containerd-content
               readOnly: true
       volumes:
+        - name: agent
+          configMap:
+            name: edgetron-pull-agent
         - name: containerd-content
           hostPath:
             path: {{ .Values.pullAgent.contentPath }}
             type: Directory
-      {{- if .Values.images.pullSecrets }}
-      imagePullSecrets:
-        - name: {{ .Values.images.pullSecrets }}
-      {{- end }}
 {{- if .Values.networkPolicy.enabled }}
 ---
 # Only edgetron asks the agents.
