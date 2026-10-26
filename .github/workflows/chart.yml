@@ -1,35 +1,51 @@
 name: Chart
 
-# Publishes this chart to petasus-ai/edgestack-helm on every push to main, with the
-# shared action of petasus-ai/.github: 0.0.0-dev to the dev channel, and, while sites on
-# edgespray main or master still install it, 3.5.0 replaced on master as before.
+# Publishes this chart to petasus-ai/edgestack-helm with the shared actions of
+# petasus-ai/.github: every push to main replaces 0.0.0-dev on the dev channel, and a tag
+# vX.Y.Z on release-X.Y publishes X.Y.Z on the stable channel, with appVersion vX.Y.Z
+# for the edgetron and edgetron-watcher images of the same tag. v3.5.0, the first
+# release, replaces the 3.5.0 that main republished until then, one last time.
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   workflow_dispatch: {}
 
 concurrency:
-  group: chart
+  group: chart-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  publish:
+  dev:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           path: chart
       - name: Publish 0.0.0-dev to the dev channel
-        uses: petasus-ai/.github/actions/publish-chart@f66755de01cb62bb6f294e1f0303e54b45c323df
+        uses: petasus-ai/.github/actions/publish-chart@bea397385a165ee51fbcb0931648cdb7cdcfc4c4
         with:
           chart: chart
           channel: dev
           token: ${{ secrets.MY_TOKEN }}
-      - name: Replace 3.5.0 on master
-        uses: petasus-ai/.github/actions/publish-chart@f66755de01cb62bb6f294e1f0303e54b45c323df
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: chart
+      - uses: petasus-ai/.github/actions/guard-release-tag@30599a61231e382146695a0bbcaff37555bdb533
+        with:
+          path: chart
+      - name: Publish the release to the stable channel
+        uses: petasus-ai/.github/actions/publish-chart@bea397385a165ee51fbcb0931648cdb7cdcfc4c4
         with:
           chart: chart
           channel: stable
-          version: "3.5.0"
-          replace: "true"
+          version: ${{ github.ref_name }}
+          app-version: ${{ github.ref_name }}
+          replace: ${{ github.ref_name == 'v3.5.0' && 'true' || 'false' }}
           token: ${{ secrets.MY_TOKEN }}

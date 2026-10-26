@@ -116,7 +116,7 @@ spec:
       serviceAccountName: provider-api
       containers:
         - name: edgetron
-          image: {{ .Values.edgetronImage.registry }}/{{ .Values.edgetronImage.repository }}:{{ .Values.edgetronImage.tag }}
+          image: {{ .Values.edgetronImage.registry }}/{{ .Values.edgetronImage.repository }}:{{ .Values.edgetronImage.tag | default .Chart.AppVersion }}
           imagePullPolicy: {{ .Values.edgetronImage.pullPolicy }}
           ports:
             - containerPort: 8080
@@ -160,7 +160,7 @@ spec:
           resources: {{ toYaml .Values.resources | nindent 12 }}
           {{- end }}
         - name: watcher
-          image: {{ .Values.edgetronWatcherImage.registry }}/{{ .Values.edgetronWatcherImage.repository }}:{{ .Values.edgetronWatcherImage.tag }}
+          image: {{ .Values.edgetronWatcherImage.registry }}/{{ .Values.edgetronWatcherImage.repository }}:{{ .Values.edgetronWatcherImage.tag | default .Chart.AppVersion }}
           imagePullPolicy: {{ .Values.edgetronWatcherImage.pullPolicy }}
           volumeMounts:
             - mountPath: /tmp/cluster-configs

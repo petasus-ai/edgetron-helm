@@ -2,19 +2,22 @@ images: {}
 edgetronImage:
   registry: registry.tde.sktelecom.com
   repository: petasus/edgetron
-  tag: latest
+  # empty: the chart's appVersion, the edgetron release tag (dev on the dev channel)
+  tag: ""
   pullPolicy: IfNotPresent
 
 edgetronWatcherImage:
   registry: registry.tde.sktelecom.com
   repository: petasus/edgetron/watcher
-  tag: latest
+  # empty: the chart's appVersion, as for edgetronImage
+  tag: ""
   pullPolicy: IfNotPresent
 
 vmEventImage:
   registry: registry.tde.sktelecom.com
   repository: petasus/vm-event-operator
-  tag: latest
+  # vm-event-operator has releases of its own; the one this chart was released with
+  tag: v0.1.0
   pullPolicy: IfNotPresent
 
 replicaCount: 1
