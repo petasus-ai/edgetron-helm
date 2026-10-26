@@ -24,7 +24,7 @@ jobs:
         with:
           path: chart
       - name: Publish 0.0.0-dev to the dev channel
-        uses: petasus-ai/.github/actions/publish-chart@bea397385a165ee51fbcb0931648cdb7cdcfc4c4
+        uses: petasus-ai/.github/actions/publish-chart@1635454a4fc43d16be6bdaae33feb3204ef8c922
         with:
           chart: chart
           channel: dev
@@ -41,7 +41,7 @@ jobs:
         with:
           path: chart
       - name: Publish the release to the stable channel
-        uses: petasus-ai/.github/actions/publish-chart@bea397385a165ee51fbcb0931648cdb7cdcfc4c4
+        uses: petasus-ai/.github/actions/publish-chart@1635454a4fc43d16be6bdaae33feb3204ef8c922
         with:
           chart: chart
           channel: stable
